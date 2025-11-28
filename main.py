@@ -114,8 +114,10 @@ async def edit_to_invite_link(chat_id: int, message_id: int) -> None:
 @router.message(Command("start"))
 async def cmd_start(message: Message):
     user_id = message.from_user.id
+    logger.info(f"Received /start from user {user_id}")
     
     is_member = await check_user_in_channel(user_id)
+    logger.info(f"User {user_id} is_member: {is_member}")
     
     if is_member:
         member_text = (
@@ -180,7 +182,6 @@ async def main():
     logger.info(f"CHANNEL_ID: {CHANNEL_ID}")
     logger.info(f"PORT: {PORT}")
     
-    # Удаляем вебхук чтобы избежать конфликта с другими instance'ами
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         logger.info("Webhook deleted")
