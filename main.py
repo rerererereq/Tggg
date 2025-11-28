@@ -154,11 +154,38 @@ async def callback_new_invite_link(callback: CallbackQuery):
 
 async def main():
     dp.include_router(router)
-    
+    async def health_check(request):
+    return web.Response(text="OK", status=200)
+async def run_http_server():
+    app = web.Application()
+    app.router.add_get("/", health_check)
+    runner = web.AppRunner(app)
+    try:
+        await runner.setup()
+        site = web.TCPSite(runner, "0.0.0.0", PORT)
+        await site.start()
+        logger.info(f"HTTP server started on port {PORT}")
+        return runner
+    except Exception as e:
+        logger.error(f"Failed to start HTTP server: {e}")
+        raise
+async def main():
+    dp.include_router(router)
     logger.info("Bot is starting...")
+    logger.info(f"BOT_TOKEN: {'*' * 10}")
+    logger.info(f"CHANNEL_ID: {CHANNEL_ID}")
+    logger.info(f"PORT: {PORT}")
     
-    await dp.start_polling(bot)
-
-
+    http_runner = None
+    try:
+        http_runner = await run_http_server()
+        logger.info("HTTP server ready, starting polling...")
+        await dp.start_polling(bot)
+    except Exception as e:
+        logger.error(f"Bot error: {e}")
+    finally:
+        if http_runner:
+            await http_runner.cleanup()
+        logger.info("Bot stopped")
 if __name__ == "__main__":
     asyncio.run(main())
